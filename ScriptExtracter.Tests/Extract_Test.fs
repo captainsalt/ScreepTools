@@ -5,16 +5,12 @@ open Xunit
 open System.IO
 open System.Collections
 
-let basePath = "testData"
+let testFolderPath = "TestFolder"
 
 [<Fact>]
 let ``getFiles returns all the files`` () =
-    let expected = [ 
-        Path.Combine(basePath, "main.js") 
-        Path.Combine(basePath, "subfolder", "subfile.js") ]
-    let discoverdFiles = Extract.getFiles basePath |> Seq.toList
-
-    Assert.Equal<string list>(expected, discoverdFiles)
+    let discoverdFiles = Extract.getFiles testFolderPath |> Seq.length
+    Assert.Equal(3, discoverdFiles)
 
 [<Fact>]
 let ``getDotNames correcty names files`` () =
