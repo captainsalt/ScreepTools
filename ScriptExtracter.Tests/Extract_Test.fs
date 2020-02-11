@@ -3,16 +3,18 @@ module Extract_Tests
 open System
 open Xunit
 open System.IO
+open System.Collections
 
-let basePath = "testFolder"
+let basePath = "testData"
 
 [<Fact>]
 let ``getFiles returns all the files`` () =
     let expected = [ 
-        Path.Combine("testFolder", "main.js") 
-        Path.Combine("testFolder", "subfolder", "subfile.js") ]
-    let discoverdFiles = Extract.getFiles basePath 
-    Assert.Equal(expected, discoverdFiles)
+        Path.Combine(basePath, "main.js") 
+        Path.Combine(basePath, "subfolder", "subfile.js") ]
+    let discoverdFiles = Extract.getFiles basePath |> Seq.toList
+
+    Assert.Equal<string list>(expected, discoverdFiles)
 
 [<Fact>]
 let ``getDotNames correcty names files`` () =
