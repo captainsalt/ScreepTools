@@ -6,6 +6,9 @@ open System.IO
 let main args = 
     match args with
     | [| rootDir; dist |] ->
+        if Directory.Exists(rootDir) |> not then
+            failwithf "Root directory: %s does not exist" rootDir
+
         let files = getFiles rootDir
 
         deleteMissing files dist
