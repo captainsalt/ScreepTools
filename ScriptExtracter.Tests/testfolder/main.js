@@ -1,2 +1,2 @@
-﻿const subfileString = require("./subfolder/subfile.js");
+﻿const subfileString = require("./sub1/subfile.js");
 console.log(subfileString);
