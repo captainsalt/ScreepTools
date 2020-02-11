@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ScreepScriptExtract": {
+      "commandName": "Project",
+      "commandLineArgs": "test dist",
+      "workingDirectory": "C:\\Users\\dontb\\Documents\\Projects\\ScreepScriptExtract\\ScreepScriptExtract"
+    }
+  }
+}
