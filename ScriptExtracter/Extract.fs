@@ -4,10 +4,10 @@ open System.IO
 open System.Text.RegularExpressions
 
 let rec getFiles basePath = 
-    let rec getFilesExec dirPath = 
-        if Seq.isEmpty dirPath then Seq.empty else
-            seq { yield! dirPath |> Seq.collect Directory.EnumerateFiles
-                  yield! dirPath |> Seq.collect Directory.EnumerateDirectories |> getFilesExec }
+    let rec getFilesExec dirPaths = 
+        if Seq.isEmpty dirPaths then Seq.empty else
+            seq { yield! dirPaths |> Seq.collect Directory.EnumerateFiles
+                  yield! dirPaths |> Seq.collect Directory.EnumerateDirectories |> getFilesExec }
 
     getFilesExec [basePath]
            
