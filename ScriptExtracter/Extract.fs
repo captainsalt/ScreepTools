@@ -13,6 +13,22 @@ let rec getFiles basePath =
            
 let getDotName filePath = Regex.Replace(filePath, @"[/\\]", ".")
 
+let removeRootPath (path: string) = 
+    path
+    |> Seq.findIndex (fun ch -> 
+        ch = '.' || ch = Path.DirectorySeparatorChar)
+    |> fun i -> path.[i + 1 ..]
+
+let deleteMissing files dist = 
+    match Directory.Exists(dist) with
+    | true -> 
+        files
+        |> Seq.map(fun fPath -> getDotName fPath |> removeRootPath)
+        |> Seq.except <| Seq.map(fun f -> removeRootPath f) (Directory.EnumerateFiles(dist))
+        |> Seq.iter (fun fPath -> File.Delete(Path.Combine(dist, fPath)))
+    | false -> 
+        ()
+
 let fixImports text = 
     let createImportPattern = sprintf """require\("./(?:../){0,}%s"\);?"""
     let matches = Regex.Matches(text, createImportPattern "(.+)")

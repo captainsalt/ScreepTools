@@ -6,7 +6,11 @@ open System.IO
 let main args = 
     match args with
     | [| rootDir; dist |] ->
-        getFiles rootDir
+        let files = getFiles rootDir
+
+        deleteMissing files dist
+
+        files
         |> Seq.map (fun fPath -> transformFile dist fPath)
         |> Async.Parallel
         |> Async.RunSynchronously
