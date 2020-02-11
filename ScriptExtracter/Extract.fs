@@ -43,11 +43,7 @@ let fixImports text =
 
 let transformFile dist filePath = async {
     let! text = File.ReadAllTextAsync(filePath) |> Async.AwaitTask
-    let newPath = 
-        let path = Path.Combine(dist, filePath |> getDotName)
-        let index = path |> Seq.findIndex (fun ch -> ch = '.')
-        let pathSubStr = path.[index + 1..]
-        Path.Combine(dist, pathSubStr)
+    let newPath = Path.Combine(dist, filePath |> getDotName |> removeRootPath) 
 
     if Directory.Exists(dist) |> not then
         Directory.CreateDirectory(dist) |> ignore
