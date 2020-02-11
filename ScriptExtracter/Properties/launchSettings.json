@@ -3,7 +3,7 @@
     "ScreepScriptExtract": {
       "commandName": "Project",
       "commandLineArgs": "test dist",
-      "workingDirectory": "C:\\Users\\dontb\\Documents\\Projects\\ScreepScriptExtract\\ScreepScriptExtract"
+      "workingDirectory": "C:\\Users\\dontb\\Documents\\Projects\\ScreepTools\\ScriptExtracter"
     }
   }
 }

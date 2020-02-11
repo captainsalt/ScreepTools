@@ -6,7 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Remove="test\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="Extract.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 </Project>

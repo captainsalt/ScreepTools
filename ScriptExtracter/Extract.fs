@@ -30,16 +30,32 @@ let transformFile dist filePath = async {
     let newPath = 
         let path = Path.Combine(dist, filePath |> getDotName)
         let index = path |> Seq.findIndex (fun ch -> ch = '.')
-        path.[index + 1..]
+        let pathSubStr = path.[index + 1..]
+        Path.Combine(dist, pathSubStr)
 
     if Directory.Exists(dist) |> not then
         Directory.CreateDirectory(dist) |> ignore
 
-    use fileStream = new FileStream(Path.Combine(dist, newPath), FileMode.Create)
-    use streamWriter = new StreamWriter(fileStream)
-    streamWriter.AutoFlush <- true
+    let writeToFile (text: string) = async {
+        use fileStream = new FileStream(newPath, FileMode.Create)
+        use streamWriter = new StreamWriter(fileStream)
+        streamWriter.AutoFlush <- true
 
-    do! streamWriter.WriteAsync(text |> fixImports) |> Async.AwaitTask
+        do! streamWriter.WriteAsync(text) |> Async.AwaitTask
+    }
+
+    let fixedText = text |> fixImports
+
+    match File.Exists(newPath) with
+    | true ->
+        let! fileText = File.ReadAllTextAsync(newPath) |> Async.AwaitTask 
+
+        match fileText = fixedText with
+        | true -> ()
+        | false ->
+            writeToFile fixedText |> Async.RunSynchronously
+    | false ->
+            writeToFile fixedText |> Async.RunSynchronously
 }
 
 
