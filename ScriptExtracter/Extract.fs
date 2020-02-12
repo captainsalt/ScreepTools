@@ -22,16 +22,6 @@ let removeRootPath (path: string) =
         ch = '.' || ch = Path.DirectorySeparatorChar)
     |> fun i -> path.[i + 1 ..]
 
-let deleteMissing files dist = 
-    match Directory.Exists(dist) with
-    | true -> 
-        files
-        |> Seq.map(fun fPath -> getDotName fPath |> removeRootPath)
-        |> Seq.except <| Seq.map(fun f -> removeRootPath f) (Directory.EnumerateFiles(dist))
-        |> Seq.iter (fun fPath -> File.Delete(Path.Combine(dist, fPath)))
-    | false -> 
-        ()
-
 let splitOnString (separator: char) (stopString: string) (input: string) = 
     input.Split(separator) 
     |> Array.rev
@@ -39,25 +29,38 @@ let splitOnString (separator: char) (stopString: string) (input: string) =
     |> Array.rev
     |> String.concat (string separator)
 
-let fixImports fileMappings jsDir text = 
-    let createImportPattern = sprintf """require\("./(?:../){0,}%s"\);?"""
-    let matches = Regex.Matches(text, createImportPattern "(.+)")
+let deleteMissing jsDir files dist = 
+    let splitJsDir = splitOnString Path.PathSeparator jsDir
+    let splitDistDir = splitOnString Path.PathSeparator dist
 
-    matches 
-    |> Seq.fold (fun text regexMatch -> 
+    match Directory.Exists(dist) with
+    | true -> 
+        files
+        |> Seq.map(fun fPath -> getDotName fPath |> splitJsDir)
+        |> Seq.except <| Seq.map(fun fPath -> splitDistDir fPath) (Directory.EnumerateFiles(dist))
+        |> Seq.iter (fun fPath -> File.Delete(Path.Combine(dist, fPath)))
+    | false -> 
+        ()
+
+let fixImports fileMappings jsDir text = 
+    let createImportPattern = sprintf """require\("./(?:../){0,}%s(\.js)?"\);?"""
+    let matches = Regex.Matches(text, createImportPattern "(.+?)")
+
+    let fixImportsFold text (regexMatch: Match) = 
         let nodeImport = regexMatch.Groups.[1].Value
         let replacePattern = createImportPattern nodeImport
         let jsDirName = DirectoryInfo(jsDir).Name
-        let (_, dotName) = 
+
+        let (_, importDotName) = 
             fileMappings 
             |> Seq.find 
-                (fun (path: string, _) -> 
-                    Path.GetFileNameWithoutExtension(path) = FileInfo(nodeImport).Name)
-        let replacement = 
-            let result = splitOnString '.' jsDirName dotName |> sprintf "require(\"%s\")"  
-            result.Replace(".js", "")
+                (fun (path: string, _) -> Path.GetFileNameWithoutExtension(path) = FileInfo(nodeImport).Name)
 
-        Regex.Replace(text, replacePattern, replacement)) text
+        let replacement = splitOnString '.' jsDirName importDotName |> sprintf "require(\"%s\")"  
+
+        Regex.Replace(text, replacePattern, replacement)
+
+    matches |> Seq.fold fixImportsFold text
 
 let transformFile fileMappings jsDir dist filePath = async {
     let (filePath, dotName) = fileMappings |> Seq.find (fun map -> fst map = filePath) 
