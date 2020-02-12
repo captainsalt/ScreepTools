@@ -29,6 +29,7 @@ let deleteMissing fileMap jsDir dist =
 
     if Directory.Exists(dist) then
         Directory.EnumerateFiles(dist)
+        |> Seq.filter(fun f -> FileInfo(f).Extension = ".js")
         |> Seq.iter 
             (fun distFile -> 
                 let distFile = FileInfo(distFile)
