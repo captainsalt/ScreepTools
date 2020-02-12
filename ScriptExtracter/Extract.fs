@@ -2,6 +2,7 @@
 
 open System.IO
 open System.Text.RegularExpressions
+open System.Collections.Generic
 
 let rec getFiles basePath = 
     let rec getFilesExec dirPaths = 
@@ -37,7 +38,7 @@ let deleteMissing fileMap jsDir dist =
                     distFile.Delete()
             )
 
-let fixImports fileMappings jsDir text = 
+let fixImports (fileMappings: (string * string) seq) jsDir text = 
     let createImportPattern = sprintf """require\("./(?:../){0,}%s(\.js)?"\);?"""
     let matches = Regex.Matches(text, createImportPattern "(.+?)")
 
@@ -46,12 +47,19 @@ let fixImports fileMappings jsDir text =
         let replacePattern = createImportPattern nodeImport
         let jsDirName = DirectoryInfo(jsDir).Name
 
-        let (_, importDotName) = 
-            fileMappings 
-            |> Seq.find 
-                (fun (path: string, _) -> Path.GetFileNameWithoutExtension(path) = FileInfo(nodeImport).Name)
+        let getImportDotName = 
+            let importMap = 
+                fileMappings
+                |> Seq.tryFind 
+                    (fun (path, _) -> Path.GetFileNameWithoutExtension(path) = FileInfo(nodeImport).Name)
 
-        let replacement = splitOnString '.' jsDirName importDotName |> sprintf "require(\"%s\")"  
+            match importMap with 
+            | Some (_, importDotName) -> 
+                splitOnString '.' jsDirName importDotName 
+            | None -> 
+                failwithf "Import not found for: %s" nodeImport
+
+        let replacement = splitOnString '.' jsDirName getImportDotName |> sprintf "require(\"%s\")"  
 
         Regex.Replace(text, replacePattern, replacement)
 
