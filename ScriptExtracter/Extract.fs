@@ -46,10 +46,16 @@ let fixImports fileMappings jsDir text =
     matches 
     |> Seq.fold (fun text regexMatch -> 
         let nodeImport = regexMatch.Groups.[1].Value
-        let (_, dotName) = fileMappings |> Seq.find (fun fMap -> FileInfo(fst fMap).Name = FileInfo(nodeImport).Name)
         let replacePattern = createImportPattern nodeImport
         let jsDirName = DirectoryInfo(jsDir).Name
-        let replacement = splitOnString '.' jsDirName dotName |> sprintf "require(\"%s\")"  
+        let (_, dotName) = 
+            fileMappings 
+            |> Seq.find 
+                (fun (path: string, _) -> 
+                    Path.GetFileNameWithoutExtension(path) = FileInfo(nodeImport).Name)
+        let replacement = 
+            let result = splitOnString '.' jsDirName dotName |> sprintf "require(\"%s\")"  
+            result.Replace(".js", "")
 
         Regex.Replace(text, replacePattern, replacement)) text
 
