@@ -13,6 +13,9 @@ let rec getFiles basePath =
            
 let getDotName filePath = Regex.Replace(filePath, @"[/\\]", ".")
 
+/// Map files to dotname
+let mapFiles files = files |> Seq.map (fun filePath -> (filePath , getDotName filePath))
+
 let removeRootPath (path: string) = 
     path
     |> Seq.findIndex (fun ch -> 
@@ -29,21 +32,32 @@ let deleteMissing files dist =
     | false -> 
         ()
 
-let fixImports text = 
+let splitOnString (separator: char) (stopString: string) (input: string) = 
+    input.Split(separator) 
+    |> Array.rev
+    |> Array.takeWhile (fun str -> str <> stopString)
+    |> Array.rev
+    |> String.concat (string separator)
+
+let fixImports fileMappings jsDir text = 
     let createImportPattern = sprintf """require\("./(?:../){0,}%s"\);?"""
     let matches = Regex.Matches(text, createImportPattern "(.+)")
 
     matches 
-    |> Seq.fold (fun text m -> 
-        let importPath = m.Groups.[1].Value
-        let dotName = importPath |> getDotName
-        let replacePattern = createImportPattern importPath
+    |> Seq.fold (fun text regexMatch -> 
+        let nodeImport = regexMatch.Groups.[1].Value
+        let (_, dotName) = fileMappings |> Seq.find (fun fMap -> FileInfo(fst fMap).Name = FileInfo(nodeImport).Name)
+        let replacePattern = createImportPattern nodeImport
+        let jsDirName = DirectoryInfo(jsDir).Name
+        let replacement = splitOnString '.' jsDirName dotName |> sprintf "require(\"%s\")"  
 
-        Regex.Replace(text, replacePattern, sprintf "require(\"%s\")" dotName)) text
+        Regex.Replace(text, replacePattern, replacement)) text
 
-let transformFile dist filePath = async {
+let transformFile fileMappings jsDir dist filePath = async {
+    let (filePath, dotName) = fileMappings |> Seq.find (fun map -> fst map = filePath) 
     let! text = File.ReadAllTextAsync(filePath) |> Async.AwaitTask
-    let newPath = Path.Combine(dist, filePath |> getDotName |> removeRootPath) 
+    let jsDirName = DirectoryInfo(jsDir).Name
+    let newPath = Path.Combine(dist, dotName |> splitOnString '.' jsDirName)
 
     if Directory.Exists(dist) |> not then
         Directory.CreateDirectory(dist) |> ignore
@@ -56,7 +70,7 @@ let transformFile dist filePath = async {
         do! streamWriter.WriteAsync(text) |> Async.AwaitTask
     }
 
-    let fixedText = text |> fixImports
+    let fixedText = text |> fixImports fileMappings jsDir
 
     match File.Exists(newPath) with
     | true ->

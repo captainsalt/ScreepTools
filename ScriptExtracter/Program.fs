@@ -5,21 +5,23 @@ open System.IO
 [<EntryPoint>]
 let main args = 
     match args with
-    | [| rootDir; dist |] ->
-        if Directory.Exists(rootDir) |> not then
-            failwithf "Root directory: %s does not exist" rootDir
+    | [| jsDir; dist |] ->
+        if Directory.Exists(jsDir) |> not then
+            failwithf "Root directory: %s does not exist" jsDir
 
-        let files = getFiles rootDir
+        let files = getFiles jsDir
 
-        deleteMissing files dist
+        //deleteMissing files dist
+        let fileMap = files |> mapFiles
 
         files
-        |> Seq.map (fun fPath -> transformFile dist fPath)
+        |> mapFiles
+        |> Seq.map (fun fMap -> transformFile fileMap jsDir dist (fst fMap))
         |> Async.Parallel
         |> Async.RunSynchronously
         |> ignore
     | _ -> 
-        printfn "Please add arguments rootDir and dist"
+        printfn "Please add arguments jsDir and dist"
         ()
 
     0
