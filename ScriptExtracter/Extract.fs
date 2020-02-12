@@ -16,12 +16,6 @@ let getDotName filePath = Regex.Replace(filePath, @"[/\\]", ".")
 /// Map files to dotname
 let mapFiles files = files |> Seq.map (fun filePath -> (filePath , getDotName filePath))
 
-let removeRootPath (path: string) = 
-    path
-    |> Seq.findIndex (fun ch -> 
-        ch = '.' || ch = Path.DirectorySeparatorChar)
-    |> fun i -> path.[i + 1 ..]
-
 let splitOnString (separator: char) (stopString: string) (input: string) = 
     input.Split(separator) 
     |> Array.rev
