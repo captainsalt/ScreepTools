@@ -20,7 +20,7 @@ let main args =
 
         jsFiles
         |> mapFiles
-        |> Seq.map (fun fMap -> transformFile fileMap jsDir dist (fst fMap))
+        |> Seq.map (fun (fName, _) -> transformFile fileMap jsDir dist fName)
         |> Async.Parallel
         |> Async.RunSynchronously
         |> ignore
