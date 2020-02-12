@@ -10,6 +10,12 @@ let main args =
             failwithf "Root directory: %s does not exist" jsDir
 
         let jsFiles = getFiles jsDir
+
+        let removeMissingFiles = 
+            let fileMap = jsFiles |> mapFiles
+            deleteMissing fileMap jsDir dist 
+        removeMissingFiles
+
         let fileMap = jsFiles |> mapFiles
 
         jsFiles

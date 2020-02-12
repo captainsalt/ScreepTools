@@ -29,18 +29,19 @@ let splitOnString (separator: char) (stopString: string) (input: string) =
     |> Array.rev
     |> String.concat (string separator)
 
-let deleteMissing jsDir files dist = 
-    let splitJsDir = splitOnString Path.PathSeparator jsDir
-    let splitDistDir = splitOnString Path.PathSeparator dist
+let deleteMissing fileMap jsDir dist = 
+    let splitDotName = DirectoryInfo(jsDir).Name |> splitOnString '.'  
 
-    match Directory.Exists(dist) with
-    | true -> 
-        files
-        |> Seq.map(fun fPath -> getDotName fPath |> splitJsDir)
-        |> Seq.except <| Seq.map(fun fPath -> splitDistDir fPath) (Directory.EnumerateFiles(dist))
-        |> Seq.iter (fun fPath -> File.Delete(Path.Combine(dist, fPath)))
-    | false -> 
-        ()
+    if Directory.Exists(dist) then
+        Directory.EnumerateFiles(dist)
+        |> Seq.iter 
+            (fun distFile -> 
+                let distFile = FileInfo(distFile)
+                let sourceFileExists = fileMap |> Seq.exists (fun (_, dotName) -> dotName |> splitDotName = distFile.Name)
+
+                if sourceFileExists = false then
+                    distFile.Delete()
+            )
 
 let fixImports fileMappings jsDir text = 
     let createImportPattern = sprintf """require\("./(?:../){0,}%s(\.js)?"\);?"""
