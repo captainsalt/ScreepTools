@@ -56,7 +56,7 @@ let fixImports (fileMappings: (string * string) seq) jsDir text =
 
             match importMap with 
             | Some (_, importDotName) -> 
-                splitOnString '.' jsDirName importDotName 
+                splitOnString '.' jsDirName importDotName |> Path.GetFileNameWithoutExtension
             | None -> 
                 failwithf "Import not found for: %s" nodeImport
 
