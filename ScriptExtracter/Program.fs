@@ -9,10 +9,10 @@ let main args =
         if Directory.Exists(jsDir) |> not then
             failwithf "Root directory: %s does not exist" jsDir
 
-        let files = getFiles jsDir
-        let fileMap = files |> mapFiles
+        let jsFiles = getFiles jsDir
+        let fileMap = jsFiles |> mapFiles
 
-        files
+        jsFiles
         |> mapFiles
         |> Seq.map (fun fMap -> transformFile fileMap jsDir dist (fst fMap))
         |> Async.Parallel
