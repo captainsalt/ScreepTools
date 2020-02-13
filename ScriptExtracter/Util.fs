@@ -2,6 +2,7 @@
 open System.Text.RegularExpressions
 open System.IO
 open Types
+open System.IO.Abstractions
 
 let getDotName filePath = Regex.Replace(filePath, @"[/\\]", ".")
 
@@ -35,11 +36,11 @@ let mapFiles sourcePath targetPath filePaths =
             }
         )
 
-let rec getFiles basePath = 
+let rec getFiles (fs: IFileSystem) basePath = 
     let rec getFilesExec dirPaths = 
         if Seq.isEmpty dirPaths then Seq.empty else
-            seq { yield! dirPaths |> Seq.collect Directory.EnumerateFiles
-                  yield! dirPaths |> Seq.collect Directory.EnumerateDirectories |> getFilesExec }
+            seq { yield! dirPaths |> Seq.collect fs.Directory.EnumerateFiles
+                  yield! dirPaths |> Seq.collect fs.Directory.EnumerateDirectories |> getFilesExec }
 
     getFilesExec [basePath]
 
