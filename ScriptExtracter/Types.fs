@@ -1,10 +1,9 @@
 ﻿module Types
 
 type FileRecord = {
-    fileName: string
+    sourceName: string
     sourceFullPath: string
-    sourceRelativePath: string
-    distFullPath: string
-    distRelativePath: string
+    dotName: string
+    dotFullPath: string
 }
 
