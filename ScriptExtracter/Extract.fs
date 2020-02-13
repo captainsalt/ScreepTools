@@ -3,20 +3,20 @@
 open System.IO
 open System.Text.RegularExpressions
 open Util
+open System.IO.Abstractions
+open Types
 
-let deleteMissing fileMap jsDir dist = 
-    let splitDotName = DirectoryInfo(jsDir).Name |> splitOnString '.'  
-
-    if Directory.Exists(dist) then
-        Directory.EnumerateFiles(dist)
-        |> Seq.filter(fun f -> FileInfo(f).Extension = ".js")
+let deleteMissing (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath = 
+    if fs.Directory.Exists(targetPath) then
+        fs.Directory.EnumerateFiles(targetPath)
+        |> Seq.filter(fun path -> fs.FileInfo.FromFileName(path).Extension = ".js")
         |> Seq.iter 
             (fun distFile -> 
-                let distFile = FileInfo(distFile)
-                let sourceFileExists = fileMap |> Seq.exists (fun (_, dotName) -> dotName |> splitDotName = distFile.Name)
+                let distFile = fs.FileInfo.FromFileName(distFile)
+                let sourceFileExists = fileRecords |> Seq.exists (fun record -> record.dotName = distFile.Name)
 
                 if sourceFileExists = false then
-                    distFile.Delete()
+                    fs.File.Delete(distFile.FullName)
             )
 
 let fixImports (fileMappings: (string * string) seq) jsDir text = 
