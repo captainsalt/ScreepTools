@@ -4,6 +4,13 @@ open System.IO
 open System.Text.RegularExpressions
 open Util
 
+type FileRecord = {
+    sourceFullPath: string
+    sourceRelativePath: string
+    distFullPath: string
+    distRelativePath: string
+}
+
 let deleteMissing fileMap jsDir dist = 
     let splitDotName = DirectoryInfo(jsDir).Name |> splitOnString '.'  
 
