@@ -1,6 +1,7 @@
 ﻿module Program
 open Extract
 open System.IO
+open Util
 
 [<EntryPoint>]
 let main args = 

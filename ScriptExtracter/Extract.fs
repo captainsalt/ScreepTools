@@ -2,27 +2,7 @@
 
 open System.IO
 open System.Text.RegularExpressions
-open System.Collections.Generic
-
-let rec getFiles basePath = 
-    let rec getFilesExec dirPaths = 
-        if Seq.isEmpty dirPaths then Seq.empty else
-            seq { yield! dirPaths |> Seq.collect Directory.EnumerateFiles
-                  yield! dirPaths |> Seq.collect Directory.EnumerateDirectories |> getFilesExec }
-
-    getFilesExec [basePath]
-           
-let getDotName filePath = Regex.Replace(filePath, @"[/\\]", ".")
-
-/// Map files to dotname
-let mapFiles files = files |> Seq.map (fun filePath -> (filePath , getDotName filePath))
-
-let splitOnString (separator: char) (stopString: string) (input: string) = 
-    input.Split(separator) 
-    |> Array.rev
-    |> Array.takeWhile (fun str -> str <> stopString)
-    |> Array.rev
-    |> String.concat (string separator)
+open Util
 
 let deleteMissing fileMap jsDir dist = 
     let splitDotName = DirectoryInfo(jsDir).Name |> splitOnString '.'  
