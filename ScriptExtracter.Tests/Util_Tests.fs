@@ -7,8 +7,10 @@ let testTargetPath = "dist"
 
 [<Fact>]
 let ``getFiles returns all the files`` () =
-    let discoverdFiles = Util.getFiles testSourcePath |> Seq.length
-    Assert.Equal(3, discoverdFiles)
+    let getFilesLength = Util.getFiles testSourcePath |> Seq.length
+    let expectedLength = 3
+
+    Assert.Equal(expectedLength, getFilesLength)
 
 [<Fact>]
 let ``getDotNames correcty names files`` () =
