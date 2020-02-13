@@ -26,7 +26,6 @@ let mapFiles sourcePath targetPath filePaths =
                 <| '.' 
                 <| sourceInfo.Name
                 <| getDotName fInfo.FullName 
-                |> Path.GetFileNameWithoutExtension
 
             { 
                 sourceName = fInfo.Name

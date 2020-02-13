@@ -29,5 +29,5 @@ let ``Assert mapfiles generates correct records`` () =
 
     Assert.Equal(subFileInfo.Name, subFileRecord.sourceName)
     Assert.Equal(subFileInfo.FullName, subFileRecord.sourceFullPath)
-    Assert.Equal("sub1.subfile", subFileRecord.dotName)
+    Assert.Equal("sub1.subfile.js", subFileRecord.dotName)
     Assert.Equal(expextedDotFullPath, subFileRecord.dotFullPath)
