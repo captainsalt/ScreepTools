@@ -7,9 +7,9 @@ open System.IO.Abstractions.TestingHelpers
 let ``Assert getSourceFiles returns all the files`` () =
     let sourcePath = @"C:\js\"
     let mockFs = MockFileSystem()
-    mockFs.AddFile(@"C:\js\main.js", new MockFileData("require(\"root.js\")"))
-    mockFs.AddFile(@"C:\js\subfile.js", new MockFileData("require(\"../main.js\")"))
-    mockFs.AddFile(@"C:\ignoreme.js", new MockFileData("Please ignore me"))
+    mockFs.AddFile(@"C:\js\main.js", new MockFileData(""))
+    mockFs.AddFile(@"C:\js\subfile.js", new MockFileData(""))
+    mockFs.AddFile(@"C:\ignoreme.js", new MockFileData(""))
 
     let getFilesLength = Util.getSourceFiles mockFs sourcePath |> Seq.length
     let expectedLength = 2
@@ -23,13 +23,12 @@ let ``Assert getDotNames correcty names files`` () =
 
 [<Fact>]
 let ``Assert gerateFileRecords generates records with correct information`` () =
-    //Setup
     let sourcePath = @"C:\js\"
     let targetPath = @"C:\target"
     let mockFs = 
         let fileSystem = MockFileSystem()
-        fileSystem.AddFile(@"C:\js\main.js", new MockFileData("require(\"root.js\")"))
-        fileSystem.AddFile(@"C:\js\sub1\subfile.js", new MockFileData("require(\"../main.js\")"))
+        fileSystem.AddFile(@"C:\js\main.js", new MockFileData(""))
+        fileSystem.AddFile(@"C:\js\sub1\subfile.js", new MockFileData(""))
 
         fileSystem
 
