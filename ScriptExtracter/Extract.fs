@@ -32,7 +32,10 @@ let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) text =
                 fileRecords
                 |> Seq.tryFind 
                     (fun fRecord -> 
-                        fs.Path.GetFileNameWithoutExtension(fRecord.sourceName) = fs.FileInfo.FromFileName(nodeImport).Name)
+                        let recordFileName = fs.Path.GetFileNameWithoutExtension(fRecord.sourceName) 
+                        let nodeImportName = fs.FileInfo.FromFileName(nodeImport).Name
+                        recordFileName = nodeImportName
+                    )
 
             match getImportRecord with 
             | Some record -> 
