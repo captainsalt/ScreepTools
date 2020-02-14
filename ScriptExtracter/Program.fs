@@ -12,6 +12,12 @@ let main args =
             failwithf "Root directory: %s does not exist" sourceDir
 
         let fileSystem = FileSystem()
+
+        let deleteMissingFiles = 
+            let jsFiles = getSourceFiles fileSystem sourceDir
+            let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
+            deleteMissing fileSystem  fileRecords targetDir
+        deleteMissingFiles
         
         let jsFiles = getSourceFiles fileSystem sourceDir
         let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
