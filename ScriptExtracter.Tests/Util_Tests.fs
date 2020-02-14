@@ -3,7 +3,6 @@ open Xunit
 open System.IO
 open System.IO.Abstractions.TestingHelpers
 
-
 [<Fact>]
 let ``Assert getFiles returns all the files`` () =
     let sourcePath = @"C:\js\"

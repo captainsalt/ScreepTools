@@ -17,9 +17,7 @@ let generateFileRecords (fs: IFileSystem) sourcePath targetPath filePaths =
     filePaths 
     |> Seq.map 
         (fun sourceFile -> 
-            let sourceInfo = fs.DirectoryInfo.FromDirectoryName(sourcePath)
             let targetInfo = fs.DirectoryInfo.FromDirectoryName(targetPath)
-            let omitExtension (path: string) = path.[..path.Length - 4]
 
             let sourceInfo = fs.FileInfo.FromFileName(sourceFile)
             let getDotName = 
