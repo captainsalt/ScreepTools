@@ -39,7 +39,6 @@ let ``Assert fixImports correctly changes imports`` () =
 let ``Assert deleteMissing removes missing files from target directory`` () = 
     let sourcePath = @"C:\js\"
     let targetPath = @"C:\target"
-    let subFilePath = @"C:\js\subfolder\subfile.js"
 
     let mockFs = 
         let fileSystem = MockFileSystem()
