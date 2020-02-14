@@ -19,35 +19,41 @@ let deleteMissing (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath =
                     fs.File.Delete(distFile.FullName)
             )
 
-let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) text = 
+let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async {
+    let! fileText = fs.File.ReadAllTextAsync(filePath) |> Async.AwaitTask
     let createImportPattern = sprintf """require\("./(?<traversal>(?:../){0,})%s(\.js)?"\);?"""
-    let matches = Regex.Matches(text, createImportPattern "(?<import>.+?)")
+    let matches = Regex.Matches(fileText, createImportPattern "(?<import>.+?)")
 
-    let fixImportsFold text (regexMatch: Match) = 
-        let nodeImport = regexMatch.Groups.["import"].Value
-        let replacePattern = createImportPattern nodeImport
+    let fixedText = 
+        matches 
+        |> Seq.fold 
+            (fun text regexMatch -> 
+                let nodeImport = regexMatch.Groups.["import"].Value
+                let replacePattern = createImportPattern nodeImport
 
-        let importRecord = 
-            let getImportRecord = 
-                fileRecords
-                |> Seq.tryFind 
-                    (fun fRecord -> 
-                        let recordFileName = fs.Path.GetFileNameWithoutExtension(fRecord.sourceName) 
-                        let nodeImportName = fs.FileInfo.FromFileName(nodeImport).Name
-                        recordFileName = nodeImportName
-                    )
+                let importRecord = 
+                    let getImportRecord = 
+                        fileRecords
+                        |> Seq.tryFind 
+                            (fun fRecord -> 
+                                let recordFileName = fs.Path.GetFileNameWithoutExtension(fRecord.sourceName) 
+                                let nodeImportName = fs.FileInfo.FromFileName(nodeImport).Name
+                                recordFileName = nodeImportName
+                            )
 
-            match getImportRecord with 
-            | Some record -> 
-                record
-            | None -> 
-                failwithf "Import not found for: %s" nodeImport
+                    match getImportRecord with 
+                    | Some record -> 
+                        record
+                    | None -> 
+                        failwithf "Import not found for: %s" nodeImport
 
-        let replacement = importRecord.dotName |> sprintf "require(\"%s\")"  
+                let replacement = importRecord.dotName |> sprintf "require(\"%s\")"  
 
-        Regex.Replace(text, replacePattern, replacement)
+                Regex.Replace(text, replacePattern, replacement)
+            ) fileText
 
-    matches |> Seq.fold fixImportsFold text
+    return (fixedText, fileText)
+}
 
 /// Extracts the sourceFile to the target path
 let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourceFile = async {
