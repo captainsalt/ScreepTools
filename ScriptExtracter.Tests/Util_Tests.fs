@@ -22,17 +22,41 @@ let ``getDotNames correcty names files`` () =
     Assert.Equal("one", Util.getDotName "one")
     Assert.Equal("one.two.three", Util.getDotName "one/two/three")
 
-//[<Fact>]
-//let ``Assert mapfiles generates correct records`` () =
-//    let testFiles = Util.getFiles testSourcePath
-//    let fileRecords = Util.mapFiles testSourcePath testTargetPath testFiles
-//    let subFileInfo = FileInfo(@"TestFolder\sub1\subfile.js")
+[<Fact>]
+let ``Assert gerateFileRecords generates records with correct information`` () =
+    //Setup
+    let sourcePath = @"C:\js\"
+    let targetPath = @"C:\target"
+    let mockFs = 
+        let fileSystem = MockFileSystem()
+        fileSystem.AddFile(@"C:\js\main.js", new MockFileData("require(\"root.js\")"))
+        fileSystem.AddFile(@"C:\js\sub1\subfile.js", new MockFileData("require(\"../main.js\")"))
 
-//    let subFileRecord = fileRecords |> Seq.find (fun record -> record.sourceName = "subfile.js")
+        fileSystem
 
-//    let expextedDotFullPath = Path.Combine(Path.GetFullPath(testTargetPath), subFileRecord.dotName)
+    let fileRecords = 
+        let testFiles = Util.getFiles mockFs sourcePath
+        
+        Util.generateFileRecords
+        <| mockFs 
+        <| sourcePath 
+        <| targetPath 
+        <| testFiles
 
-//    Assert.Equal(subFileInfo.Name, subFileRecord.sourceName)
-//    Assert.Equal(subFileInfo.FullName, subFileRecord.sourceFullPath)
-//    Assert.Equal("sub1.subfile.js", subFileRecord.dotName)
-//    Assert.Equal(expextedDotFullPath, subFileRecord.dotFullPath)
+    let subFileRecord = 
+        fileRecords 
+        |> Seq.find (fun record -> record.sourceName = "subfile.js")
+
+    let subFileInfo = 
+        mockFs.FileInfo.FromFileName(subFileRecord.sourceFullPath)
+
+    let expextedDotFullPath = 
+        let fullTargetPath = mockFs.Path.GetFullPath(targetPath)
+        mockFs.Path.Combine(fullTargetPath, subFileRecord.dotName)
+
+    let expectedDotName = "sub1.subfile.js"
+
+    Assert.Equal(subFileInfo.Name, subFileRecord.sourceName)
+    Assert.Equal(subFileInfo.FullName, subFileRecord.sourceFullPath)
+    Assert.Equal(expectedDotName, subFileRecord.dotName)
+    Assert.Equal(expextedDotFullPath, subFileRecord.dotFullPath)

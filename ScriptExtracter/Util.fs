@@ -13,15 +13,15 @@ let splitOnString (separator: char) (stopString: string) (input: string) =
     |> Array.rev
     |> String.concat (string separator)
 
-/// Map files to FileRecord
-let mapFiles sourcePath targetPath filePaths = 
+
+let generateFileRecords (fs: IFileSystem) sourcePath targetPath filePaths = 
     filePaths 
     |> Seq.map 
         (fun filePath -> 
-            let sourceInfo = DirectoryInfo(sourcePath)
-            let targetInfo = DirectoryInfo(targetPath)
+            let sourceInfo = fs.DirectoryInfo.FromDirectoryName(sourcePath)
+            let targetInfo = fs.DirectoryInfo.FromDirectoryName(targetPath)
 
-            let fInfo = FileInfo(filePath)
+            let fInfo = fs.FileInfo.FromFileName(filePath)
             let getDotName = 
                 splitOnString 
                 <| '.' 
