@@ -6,13 +6,6 @@ open System.IO.Abstractions
 
 let getDotName filePath = Regex.Replace(filePath, @"[/\\]", ".")
 
-let splitOnString (separator: char) (stopString: string) (input: string) = 
-    input.Split(separator) 
-    |> Array.rev
-    |> Array.takeWhile (fun str -> str <> stopString)
-    |> Array.rev
-    |> String.concat (string separator)
-
 let generateFileRecords (fs: IFileSystem) sourcePath targetPath filePaths = 
     filePaths 
     |> Seq.map 
