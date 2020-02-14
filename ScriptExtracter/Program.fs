@@ -1,26 +1,29 @@
 ﻿module Program
 open Extract
 open System.IO
+open System.IO.Abstractions
+open Util
 
 [<EntryPoint>]
 let main args = 
     match args with
-    | [| jsDir; dist |] ->
-        if Directory.Exists(jsDir) |> not then
-            failwithf "Root directory: %s does not exist" jsDir
+    | [| sourceDir; targetDir |] ->
+        if Directory.Exists(sourceDir) |> not then
+            failwithf "Root directory: %s does not exist" sourceDir
 
-        let jsFiles = getFiles jsDir
+        let fileSystem = FileSystem()
 
-        let removeMissingFiles = 
-            let fileMap = jsFiles |> mapFiles
-            deleteMissing fileMap jsDir dist 
-        removeMissingFiles
+        let deleteMissingFiles = 
+            let jsFiles = getSourceFiles fileSystem sourceDir
+            let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
+            deleteMissing fileSystem  fileRecords targetDir
+        deleteMissingFiles
+        
+        let jsFiles = getSourceFiles fileSystem sourceDir
+        let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
 
-        let fileMap = jsFiles |> mapFiles
-
-        jsFiles
-        |> mapFiles
-        |> Seq.map (fun (fName, _) -> transformFile fileMap jsDir dist fName)
+        fileRecords 
+        |> Seq.map(fun record -> extractFile fileSystem fileRecords targetDir record.sourceFullPath)
         |> Async.Parallel
         |> Async.RunSynchronously
         |> ignore

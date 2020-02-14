@@ -1,100 +1,76 @@
 ﻿module Extract
 
-open System.IO
 open System.Text.RegularExpressions
-open System.Collections.Generic
+open System.IO.Abstractions
+open Types
 
-let rec getFiles basePath = 
-    let rec getFilesExec dirPaths = 
-        if Seq.isEmpty dirPaths then Seq.empty else
-            seq { yield! dirPaths |> Seq.collect Directory.EnumerateFiles
-                  yield! dirPaths |> Seq.collect Directory.EnumerateDirectories |> getFilesExec }
-
-    getFilesExec [basePath]
-           
-let getDotName filePath = Regex.Replace(filePath, @"[/\\]", ".")
-
-/// Map files to dotname
-let mapFiles files = files |> Seq.map (fun filePath -> (filePath , getDotName filePath))
-
-let splitOnString (separator: char) (stopString: string) (input: string) = 
-    input.Split(separator) 
-    |> Array.rev
-    |> Array.takeWhile (fun str -> str <> stopString)
-    |> Array.rev
-    |> String.concat (string separator)
-
-let deleteMissing fileMap jsDir dist = 
-    let splitDotName = DirectoryInfo(jsDir).Name |> splitOnString '.'  
-
-    if Directory.Exists(dist) then
-        Directory.EnumerateFiles(dist)
-        |> Seq.filter(fun f -> FileInfo(f).Extension = ".js")
+let deleteMissing (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath = 
+    if fs.Directory.Exists(targetPath) then
+        fs.Directory.EnumerateFiles(targetPath)
+        |> Seq.filter(fun path -> fs.FileInfo.FromFileName(path).Extension = ".js")
         |> Seq.iter 
             (fun distFile -> 
-                let distFile = FileInfo(distFile)
-                let sourceFileExists = fileMap |> Seq.exists (fun (_, dotName) -> dotName |> splitDotName = distFile.Name)
+                let distFile = fs.FileInfo.FromFileName(distFile)
+                let sourceFileExists = fileRecords |> Seq.exists (fun record -> record.dotName = distFile.Name)
 
                 if sourceFileExists = false then
-                    distFile.Delete()
+                    fs.File.Delete(distFile.FullName)
             )
 
-let fixImports (fileMappings: (string * string) seq) jsDir text = 
-    let createImportPattern = sprintf """require\("./(?:../){0,}%s(\.js)?"\);?"""
-    let matches = Regex.Matches(text, createImportPattern "(.+?)")
+let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async {
+    let! fileText = fs.File.ReadAllTextAsync(filePath) |> Async.AwaitTask
+    let createImportPattern = sprintf """require\("./(?<traversal>(?:../){0,})%s(\.js)?"\);?"""
+    let matches = Regex.Matches(fileText, createImportPattern "(?<import>.+?)")
 
-    let fixImportsFold text (regexMatch: Match) = 
-        let nodeImport = regexMatch.Groups.[1].Value
-        let replacePattern = createImportPattern nodeImport
-        let jsDirName = DirectoryInfo(jsDir).Name
+    let fixedText = 
+        matches 
+        |> Seq.fold 
+            (fun text regexMatch -> 
+                let nodeImport = regexMatch.Groups.["import"].Value
+                let replacePattern = createImportPattern nodeImport
 
-        let getImportDotName = 
-            let importMap = 
-                fileMappings
-                |> Seq.tryFind 
-                    (fun (path, _) -> Path.GetFileNameWithoutExtension(path) = FileInfo(nodeImport).Name)
+                let importRecord = 
+                    let getImportRecord = 
+                        fileRecords
+                        |> Seq.tryFind 
+                            (fun fRecord -> 
+                                let recordFileName = fs.Path.GetFileNameWithoutExtension(fRecord.sourceName) 
+                                let nodeImportName = fs.FileInfo.FromFileName(nodeImport).Name
+                                recordFileName = nodeImportName
+                            )
 
-            match importMap with 
-            | Some (_, importDotName) -> 
-                splitOnString '.' jsDirName importDotName |> Path.GetFileNameWithoutExtension
-            | None -> 
-                failwithf "Import not found for: %s" nodeImport
+                    match getImportRecord with 
+                    | Some record -> 
+                        record
+                    | None -> 
+                        failwithf "Import not found for: %s" nodeImport
 
-        let replacement = splitOnString '.' jsDirName getImportDotName |> sprintf "require(\"%s\")"  
+                let replacement = importRecord.dotName |> sprintf "require(\"%s\")"  
 
-        Regex.Replace(text, replacePattern, replacement)
+                Regex.Replace(text, replacePattern, replacement)
+            ) fileText
 
-    matches |> Seq.fold fixImportsFold text
-
-let transformFile fileMappings jsDir dist filePath = async {
-    let (filePath, dotName) = fileMappings |> Seq.find (fun map -> fst map = filePath) 
-    let! text = File.ReadAllTextAsync(filePath) |> Async.AwaitTask
-    let jsDirName = DirectoryInfo(jsDir).Name
-    let newPath = Path.Combine(dist, dotName |> splitOnString '.' jsDirName)
-
-    if Directory.Exists(dist) |> not then
-        Directory.CreateDirectory(dist) |> ignore
-
-    let writeToFile (text: string) = async {
-        use fileStream = new FileStream(newPath, FileMode.Create)
-        use streamWriter = new StreamWriter(fileStream)
-        streamWriter.AutoFlush <- true
-
-        do! streamWriter.WriteAsync(text) |> Async.AwaitTask
-    }
-
-    let fixedText = text |> fixImports fileMappings jsDir
-
-    match File.Exists(newPath) with
-    | true ->
-        let! fileText = File.ReadAllTextAsync(newPath) |> Async.AwaitTask 
-
-        match fileText = fixedText with
-        | true -> ()
-        | false ->
-            writeToFile fixedText |> Async.RunSynchronously
-    | false ->
-            writeToFile fixedText |> Async.RunSynchronously
+    return (fixedText, fileText)
 }
 
+/// Extracts the sourceFile to the target path
+let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourceFilePath = async {
+    let newFilePath = 
+        fileRecords 
+        |> Seq.find (fun record -> record.sourceFullPath = sourceFilePath) 
+        |> fun record -> record.dotFullPath
+
+    if fs.Directory.Exists(targetPath) |> not then
+        fs.Directory.CreateDirectory(targetPath) |> ignore
+
+    let (fixedText, oldText) = fixImports fs fileRecords sourceFilePath |> Async.RunSynchronously
+
+    if fs.File.Exists(newFilePath) then
+        if oldText = fixedText then 
+            ()
+        else
+            do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
+    else
+        do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
+}
 
