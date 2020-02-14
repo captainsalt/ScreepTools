@@ -1,6 +1,5 @@
 ﻿module Util_Tests
 open Xunit
-open System.IO
 open System.IO.Abstractions.TestingHelpers
 
 [<Fact>]

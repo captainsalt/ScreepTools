@@ -1,8 +1,6 @@
 ﻿module Extract
 
-open System.IO
 open System.Text.RegularExpressions
-open Util
 open System.IO.Abstractions
 open Types
 

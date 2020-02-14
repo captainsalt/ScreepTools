@@ -1,9 +1,6 @@
 module Extract_Tests
 
-open System
 open Xunit
-open System.IO
-open System.Collections
 open System.IO.Abstractions.TestingHelpers
 
 [<Fact>]
