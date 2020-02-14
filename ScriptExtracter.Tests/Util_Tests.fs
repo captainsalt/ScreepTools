@@ -18,7 +18,7 @@ let ``Assert getFiles returns all the files`` () =
     Assert.Equal(expectedLength, getFilesLength)
 
 [<Fact>]
-let ``getDotNames correcty names files`` () =
+let ``Assert getDotNames correcty names files`` () =
     Assert.Equal("one", Util.getDotName "one")
     Assert.Equal("one.two.three", Util.getDotName "one/two/three")
 
@@ -34,16 +34,16 @@ let ``Assert gerateFileRecords generates records with correct information`` () =
 
         fileSystem
 
-    let fileRecords = 
-        let testFiles = Util.getFiles mockFs sourcePath
-        
-        Util.generateFileRecords
-        <| mockFs 
-        <| sourcePath 
-        <| targetPath 
-        <| testFiles
-
     let subFileRecord = 
+        let fileRecords = 
+            let testFiles = Util.getFiles mockFs sourcePath
+            
+            Util.generateFileRecords
+            <| mockFs 
+            <| sourcePath 
+            <| targetPath 
+            <| testFiles
+
         fileRecords 
         |> Seq.find (fun record -> record.sourceName = "subfile.js")
 
