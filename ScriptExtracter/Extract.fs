@@ -48,7 +48,7 @@ let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) text =
 
 /// Extracts the sourceFile to the target path
 let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourceFile = async {
-    let! fileText = File.ReadAllTextAsync(sourceFile) |> Async.AwaitTask
+    let! fileText = fs.File.ReadAllTextAsync(sourceFile) |> Async.AwaitTask
     let newFilePath = 
         fileRecords 
         |> Seq.find (fun record -> record.sourceFullPath = sourceFile) 
@@ -64,8 +64,8 @@ let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourc
         match fileText = fixedText with
         | true -> ()
         | false ->
-            do! File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
+            do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
     | false ->
-            do! File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
+            do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
 }
 
