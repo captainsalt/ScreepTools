@@ -27,6 +27,7 @@ let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async 
         |> Seq.fold 
             (fun text regexMatch -> 
                 let nodeImport = regexMatch.Groups.["import"].Value
+                let traversal = regexMatch.Groups.["traversal"].Value
                 let replacePattern = createImportPattern nodeImport
 
                 let importRecord = 
@@ -34,16 +35,19 @@ let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async 
                         fileRecords
                         |> Seq.tryFind 
                             (fun fRecord -> 
-                                let recordFileName = fs.Path.GetFileNameWithoutExtension(fRecord.sourceName) 
-                                let nodeImportName = fs.FileInfo.FromFileName(nodeImport).Name
-                                recordFileName = nodeImportName
+                                let importFullPath = 
+                                    let fileDirectory = fs.Path.GetDirectoryName(filePath)
+                                    let pathCombo = fs.Path.Combine(fileDirectory, traversal, nodeImport + ".js")
+                                    fs.Path.GetFullPath(pathCombo)
+
+                                fRecord.sourceFullPath = importFullPath
                             )
 
                     match getImportRecord with 
                     | Some record -> 
                         record
                     | None -> 
-                        failwithf "Import not found for: %s" nodeImport
+                        failwithf "Import %s not found in %s" nodeImport filePath
 
                 let replacement = importRecord.dotName |> sprintf "require(\"%s\")"  
 

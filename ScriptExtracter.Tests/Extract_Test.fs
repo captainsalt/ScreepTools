@@ -7,12 +7,19 @@ open System.IO.Abstractions.TestingHelpers
 let ``Assert fixImports correctly changes imports`` () =
     let sourcePath = @"C:\js\"
     let targetPath = @"C:\target"
-    let subFilePath = @"C:\js\subfolder\subfile.js"
 
+    // Changed import should not be pointing to this
+    let undesiredSourceFile = @"C:\js\main.js"
+    // Import should point to this 
+    let desiredSourceFile = "C:\js\sub1\main.js"
+    // File asking for the import
+    let subFile = @"C:\js\sub1\sub2\subfile.js"
+   
     let mockFs = 
         let fileSystem = MockFileSystem()
-        fileSystem.AddFile(@"C:\js\main.js", new MockFileData(""))
-        fileSystem.AddFile(@"C:\js\subfolder\subfile.js", new MockFileData("require(\"./../main.js\")"))
+        fileSystem.AddFile(undesiredSourceFile, new MockFileData(""))
+        fileSystem.AddFile(desiredSourceFile, new MockFileData(""))
+        fileSystem.AddFile(subFile, new MockFileData("require(\"./../main.js\")"))
         fileSystem
 
     let fileRecords = 
@@ -24,8 +31,8 @@ let ``Assert fixImports correctly changes imports`` () =
         <| targetPath 
         <| testFiles
 
-    let (fixedText, _) = Extract.fixImports mockFs fileRecords subFilePath |> Async.RunSynchronously  
-    let expectedText = "require(\"main.js\")"
+    let (fixedText, _) = Extract.fixImports mockFs fileRecords subFile |> Async.RunSynchronously  
+    let expectedText = "require(\"sub1.main.js\")"
     Assert.Equal(expectedText, fixedText)
 
 [<Fact>]
