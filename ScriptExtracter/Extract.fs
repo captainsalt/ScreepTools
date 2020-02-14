@@ -59,13 +59,12 @@ let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourc
 
     let fixedText = fixImports fs fileRecords fileText
 
-    match File.Exists(newFilePath) with
-    | true ->
-        match fileText = fixedText with
-        | true -> ()
-        | false ->
+    if fs.File.Exists(newFilePath) then
+        if fileText = fixedText then 
+            ()
+        else
             do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
-    | false ->
-            do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
+    else
+        do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
 }
 
