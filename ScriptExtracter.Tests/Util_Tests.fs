@@ -4,14 +4,14 @@ open System.IO
 open System.IO.Abstractions.TestingHelpers
 
 [<Fact>]
-let ``Assert getFiles returns all the files`` () =
+let ``Assert getSourceFiles returns all the files`` () =
     let sourcePath = @"C:\js\"
     let mockFs = MockFileSystem()
     mockFs.AddFile(@"C:\js\main.js", new MockFileData("require(\"root.js\")"))
     mockFs.AddFile(@"C:\js\subfile.js", new MockFileData("require(\"../main.js\")"))
     mockFs.AddFile(@"C:\ignoreme.js", new MockFileData("Please ignore me"))
 
-    let getFilesLength = Util.getFiles mockFs sourcePath |> Seq.length
+    let getFilesLength = Util.getSourceFiles mockFs sourcePath |> Seq.length
     let expectedLength = 2
 
     Assert.Equal(expectedLength, getFilesLength)
@@ -35,7 +35,7 @@ let ``Assert gerateFileRecords generates records with correct information`` () =
 
     let subFileRecord = 
         let fileRecords = 
-            let testFiles = Util.getFiles mockFs sourcePath
+            let testFiles = Util.getSourceFiles mockFs sourcePath
             
             Util.generateFileRecords
             <| mockFs 

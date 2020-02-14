@@ -13,7 +13,7 @@ let main args =
 
         let fileSystem = FileSystem()
         
-        let jsFiles = getFiles fileSystem sourceDir
+        let jsFiles = getSourceFiles fileSystem sourceDir
         let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
 
         fileRecords 

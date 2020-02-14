@@ -19,7 +19,7 @@ let ``fixImports correctly changes imports`` () =
         fileSystem
 
     let fileRecords = 
-        let testFiles = Util.getFiles mockFs sourcePath
+        let testFiles = Util.getSourceFiles mockFs sourcePath
 
         Util.generateFileRecords
         <| mockFs 

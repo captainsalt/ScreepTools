@@ -25,7 +25,7 @@ let generateFileRecords (fs: IFileSystem) sourcePath targetPath filePaths =
             }
         )
 
-let rec getFiles (fs: IFileSystem) basePath = 
+let rec getSourceFiles (fs: IFileSystem) basePath = 
     let rec getFilesExec dirPaths = 
         if Seq.isEmpty dirPaths then Seq.empty else
             seq { yield! dirPaths |> Seq.collect fs.Directory.EnumerateFiles
