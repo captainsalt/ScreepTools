@@ -4,11 +4,29 @@ open System
 open Xunit
 open System.IO
 open System.Collections
+open System.IO.Abstractions.TestingHelpers
 
-let testFolderPath = "TestFolder"
+[<Fact>]
+let ``fixImports correctly changes imports`` () =
+    let sourcePath = @"C:\js\"
+    let targetPath = @"C:\target"
+    let subFileText = "require(\"./../main.js\")"
 
-[<Theory>]
-[<InlineData("""require("main.js")""", """require("main.js")""")>]
-[<InlineData("""require("./main.js")""", """require("main.js")""")>]
-let ``fixImports correctly changes imports`` expected actual =
-    Assert.Equal(Extract.fixImports expected, actual)
+    let mockFs = 
+        let fileSystem = MockFileSystem()
+        fileSystem.AddFile(@"C:\js\main.js", new MockFileData(""))
+        fileSystem.AddFile(@"C:\js\subfolder\subfile.js", new MockFileData(""))
+        fileSystem
+
+    let fileRecords = 
+        let testFiles = Util.getFiles mockFs sourcePath
+
+        Util.generateFileRecords
+        <| mockFs 
+        <| sourcePath 
+        <| targetPath 
+        <| testFiles
+
+    let fixedText = Extract.fixImports mockFs fileRecords subFileText  
+    let expectedText = "require(\"main.js\")"
+    Assert.Equal(expectedText, fixedText)
