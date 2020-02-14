@@ -46,37 +46,26 @@ let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) text =
 
     matches |> Seq.fold fixImportsFold text
 
-let transformFile fileMappings jsDir dist filePath = ""
-(*
-async {
-    let (filePath, dotName) = fileMappings |> Seq.find (fun map -> fst map = filePath) 
-    let! text = File.ReadAllTextAsync(filePath) |> Async.AwaitTask
-    let jsDirName = DirectoryInfo(jsDir).Name
-    let newPath = Path.Combine(dist, dotName |> splitOnString '.' jsDirName)
+/// Extracts the sourceFile to the target path
+let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourceFile = async {
+    let! fileText = File.ReadAllTextAsync(sourceFile) |> Async.AwaitTask
+    let newFilePath = 
+        fileRecords 
+        |> Seq.find (fun record -> record.sourceFullPath = sourceFile) 
+        |> fun record -> record.dotFullPath
 
-    if Directory.Exists(dist) |> not then
-        Directory.CreateDirectory(dist) |> ignore
+    if fs.Directory.Exists(targetPath) |> not then
+        Directory.CreateDirectory(targetPath) |> ignore
 
-    let writeToFile (text: string) = async {
-        use fileStream = new FileStream(newPath, FileMode.Create)
-        use streamWriter = new StreamWriter(fileStream)
-        streamWriter.AutoFlush <- true
+    let fixedText = fixImports fs fileRecords fileText
 
-        do! streamWriter.WriteAsync(text) |> Async.AwaitTask
-    }
-
-    let fixedText = text |> fixImports fileMappings jsDir
-
-    match File.Exists(newPath) with
+    match File.Exists(newFilePath) with
     | true ->
-        let! fileText = File.ReadAllTextAsync(newPath) |> Async.AwaitTask 
-
         match fileText = fixedText with
         | true -> ()
         | false ->
-            writeToFile fixedText |> Async.RunSynchronously
+            do! File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
     | false ->
-            writeToFile fixedText |> Async.RunSynchronously
+            do! File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
 }
-*)
 
