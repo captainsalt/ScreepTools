@@ -13,7 +13,6 @@ let splitOnString (separator: char) (stopString: string) (input: string) =
     |> Array.rev
     |> String.concat (string separator)
 
-
 let generateFileRecords (fs: IFileSystem) sourcePath targetPath filePaths = 
     filePaths 
     |> Seq.map 
