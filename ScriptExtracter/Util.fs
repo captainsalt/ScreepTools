@@ -16,20 +16,19 @@ let splitOnString (separator: char) (stopString: string) (input: string) =
 let generateFileRecords (fs: IFileSystem) sourcePath targetPath filePaths = 
     filePaths 
     |> Seq.map 
-        (fun filePath -> 
+        (fun sourceFile -> 
             let sourceInfo = fs.DirectoryInfo.FromDirectoryName(sourcePath)
             let targetInfo = fs.DirectoryInfo.FromDirectoryName(targetPath)
+            let omitExtension (path: string) = path.[..path.Length - 4]
 
-            let fInfo = fs.FileInfo.FromFileName(filePath)
+            let sourceInfo = fs.FileInfo.FromFileName(sourceFile)
             let getDotName = 
-                splitOnString 
-                <| '.' 
-                <| sourceInfo.Name
-                <| getDotName fInfo.FullName 
+                fs.Path.GetRelativePath(sourcePath, sourceFile)
+                |> getDotName
 
             { 
-                sourceName = fInfo.Name
-                sourceFullPath = fInfo.FullName
+                sourceName = sourceInfo.Name
+                sourceFullPath = sourceInfo.FullName
                 dotName = getDotName 
                 dotFullPath = Path.Combine(targetInfo.FullName, getDotName)
             }
