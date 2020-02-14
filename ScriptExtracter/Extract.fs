@@ -55,7 +55,7 @@ let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourc
         |> fun record -> record.dotFullPath
 
     if fs.Directory.Exists(targetPath) |> not then
-        Directory.CreateDirectory(targetPath) |> ignore
+        fs.Directory.CreateDirectory(targetPath) |> ignore
 
     let fixedText = fixImports fs fileRecords fileText
 
