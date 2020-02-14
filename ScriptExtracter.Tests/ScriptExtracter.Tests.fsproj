@@ -8,9 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="TestFolder\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
 
     <Compile Include="Util_Tests.fs" />
     <Compile Include="Extract_Test.fs" />
