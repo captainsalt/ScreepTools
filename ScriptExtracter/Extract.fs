@@ -9,12 +9,12 @@ let deleteMissing (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath =
         fs.Directory.EnumerateFiles(targetPath)
         |> Seq.filter(fun path -> fs.FileInfo.FromFileName(path).Extension = ".js")
         |> Seq.iter 
-            (fun distFile -> 
-                let distFile = fs.FileInfo.FromFileName(distFile)
-                let sourceFileExists = fileRecords |> Seq.exists (fun record -> record.dotName = distFile.Name)
-
-                if sourceFileExists = false then
-                    fs.File.Delete(distFile.FullName)
+            (fun filePath -> 
+                fileRecords 
+                |> Seq.tryFind (fun record -> record.dotFullPath = filePath)
+                |> fun record -> 
+                    if record.IsNone then 
+                        fs.File.Delete(filePath)
             )
 
 let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async {
