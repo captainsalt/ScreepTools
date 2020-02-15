@@ -20,10 +20,10 @@ let deleteMissing (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath =
 let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async {
     let! fileText = fs.File.ReadAllTextAsync(filePath) |> Async.AwaitTask
     let importPattern = """require\(['"]
-        (?<import>(./(?:../){0,}).+?)
-        (\.js)?['"]\);?"""
+                        (?<import>./(../){0,}.+?)
+                        (\.js)?['"]\);?"""
 
-    let regexOptions = enum 32 // ignore whitespace
+    let regexOptions = enum 36 // ignore whitespace and explicit capture
     let matches = Regex.Matches(fileText, importPattern, regexOptions)
 
     let fixedText = 
