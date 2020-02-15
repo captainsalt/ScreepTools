@@ -19,16 +19,18 @@ let deleteMissing (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath =
 
 let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async {
     let! fileText = fs.File.ReadAllTextAsync(filePath) |> Async.AwaitTask
-    let createImportPattern = sprintf """require\("./(?<traversal>(?:../){0,})%s(\.js)?"\);?"""
-    let matches = Regex.Matches(fileText, createImportPattern "(?<import>.+?)")
+    let importPattern = """require\(['"]
+        (?<import>(./(?:../){0,}).+?)
+        (\.js)?['"]\);?"""
+
+    let regexOptions = enum 32 // ignore whitespace
+    let matches = Regex.Matches(fileText, importPattern, regexOptions)
 
     let fixedText = 
         matches 
         |> Seq.fold 
             (fun text regexMatch -> 
                 let nodeImport = regexMatch.Groups.["import"].Value
-                let traversal = regexMatch.Groups.["traversal"].Value
-                let replacePattern = createImportPattern nodeImport
 
                 let importRecord = 
                     let getImportRecord = 
@@ -37,8 +39,8 @@ let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async 
                             (fun fRecord -> 
                                 let importFullPath = 
                                     let fileDirectory = fs.Path.GetDirectoryName(filePath)
-                                    let pathCombo = fs.Path.Combine(fileDirectory, traversal, nodeImport + ".js")
-                                    fs.Path.GetFullPath(pathCombo)
+                                    let importRelativePath = fs.Path.Combine(fileDirectory, nodeImport + ".js")
+                                    fs.Path.GetFullPath(importRelativePath)
 
                                 fRecord.sourceFullPath = importFullPath
                             )
@@ -48,7 +50,8 @@ let fixImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async 
                         record
                     | None -> 
                         failwithf "Import %s not found in %s" nodeImport filePath
-
+                
+                let replacePattern = sprintf """require\("%s(\.js)?"\);?""" nodeImport
                 let replacement = importRecord.dotName |> sprintf "require(\"%s\")"  
 
                 Regex.Replace(text, replacePattern, replacement)
