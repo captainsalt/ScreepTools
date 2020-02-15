@@ -67,7 +67,7 @@ let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourc
     if fs.Directory.Exists(targetPath) |> not then
         fs.Directory.CreateDirectory(targetPath) |> ignore
 
-    let (fixedText, oldText) = fixImports fs fileRecords sourceFilePath |> Async.RunSynchronously
+    let! (fixedText, oldText) = fixImports fs fileRecords sourceFilePath
 
     if fs.File.Exists(newFilePath) then
         if oldText = fixedText then 
