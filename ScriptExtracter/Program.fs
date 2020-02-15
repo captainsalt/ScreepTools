@@ -24,11 +24,14 @@ let main args =
         let jsFiles = getSourceFiles fileSystem sourceDir
         let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
 
-        fileRecords 
-        |> Seq.map(fun record -> extractFile fileSystem fileRecords targetDir record.sourceFullPath)
-        |> Async.Parallel
-        |> Async.RunSynchronously
-        |> ignore
+        try
+            fileRecords 
+            |> Seq.map(fun record -> extractFile fileSystem fileRecords targetDir record.sourceFullPath)
+            |> Async.Parallel
+            |> Async.RunSynchronously
+            |> ignore
+        with
+        | ex -> printfn "%s" ex.Message
 
         printfn "Done"
     | _ -> 
