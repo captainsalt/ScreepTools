@@ -3,9 +3,13 @@ open Extract
 open System.IO
 open System.IO.Abstractions
 open Util
+open System.Diagnostics
 
 [<EntryPoint>]
 let main args = 
+    let watch = Stopwatch()
+    watch.Start()
+
     match args with
     | [| sourceDir; targetDir |] ->
         if Directory.Exists(sourceDir) |> not then
@@ -33,7 +37,8 @@ let main args =
         with
         | ex -> printfn "%s" ex.Message
 
-        printfn "Done"
+        watch.Stop()
+        printfn "Done in %s seconds" <| watch.Elapsed.ToString("s\.ffff")
     | _ -> 
         printfn "Please add arguments jsDir and dist"
         ()
