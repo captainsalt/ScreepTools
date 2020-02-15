@@ -28,7 +28,7 @@ let generateFileRecords (fs: IFileSystem) sourcePath targetPath filePaths =
 let rec getSourceFiles (fs: IFileSystem) basePath = 
     let rec getFilesExec dirPaths = 
         if Seq.isEmpty dirPaths then Seq.empty else
-            seq { yield! dirPaths |> Seq.collect fs.Directory.EnumerateFiles
+            seq { yield! dirPaths |> Seq.collect fs.Directory.EnumerateFiles |> Seq.filter (fun f -> fs.Path.GetExtension(f) = ".js")
                   yield! dirPaths |> Seq.collect fs.Directory.EnumerateDirectories |> getFilesExec }
 
     getFilesExec [basePath]
