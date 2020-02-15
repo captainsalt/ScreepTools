@@ -11,6 +11,8 @@ let main args =
         if Directory.Exists(sourceDir) |> not then
             failwithf "Root directory: %s does not exist" sourceDir
 
+        printfn "Extracting files..."
+
         let fileSystem = FileSystem()
 
         let deleteMissingFiles = 
@@ -27,6 +29,8 @@ let main args =
         |> Async.Parallel
         |> Async.RunSynchronously
         |> ignore
+
+        printfn "Done"
     | _ -> 
         printfn "Please add arguments jsDir and dist"
         ()
