@@ -32,7 +32,7 @@ let ``Assert fixImports correctly changes imports`` () =
         <| testFiles
 
     let (fixedText, _) = Extract.fixImports mockFs fileRecords subFile |> Async.RunSynchronously  
-    let expectedText = "require(\"sub1.main.js\")"
+    let expectedText = "require(\"sub1.main\")"
     Assert.Equal(expectedText, fixedText)
 
 [<Fact>]
