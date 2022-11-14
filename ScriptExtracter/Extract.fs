@@ -19,15 +19,15 @@ let deleteMissing (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath =
             )
 
 let replaceImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = async {
-    let! fileText = fs.File.ReadAllTextAsync(filePath) |> Async.AwaitTask
+    let! originalText = fs.File.ReadAllTextAsync(filePath) |> Async.AwaitTask
     let regexOptions = enum 36 // ignore whitespace and explicit capture
     let importPattern = """require\(['"]
                         (?<import>./(../){0,}.+?)
                         (\.js)?['"]\);?"""
 
-    let matchedImports = Regex.Matches(fileText, importPattern, regexOptions)
+    let matchedImports = Regex.Matches(originalText, importPattern, regexOptions)
 
-    let fixedText = 
+    let updatedText = 
         matchedImports 
         |> Seq.fold 
             (fun text regexMatch -> 
@@ -41,9 +41,9 @@ let replaceImports (fs: IFileSystem) (fileRecords: FileRecord seq) filePath = as
                     Regex.Replace(text, replacePattern, replacement)
                 | None -> 
                     failwith $"Import {nodeImport} not found in {filePath}"
-            ) fileText
+            ) originalText
 
-    return (fixedText, fileText)
+    return (updatedText, originalText)
 }
 
 /// Extracts the sourceFile to the target path
@@ -56,10 +56,10 @@ let extractFile (fs: IFileSystem) (fileRecords: FileRecord seq) targetPath sourc
     if fs.Directory.Exists(targetPath) |> not then
         fs.Directory.CreateDirectory(targetPath) |> ignore
 
-    let! (fixedText, oldText) = replaceImports fs fileRecords sourceFilePath
+    let! (updatedText, originalText) = replaceImports fs fileRecords sourceFilePath
 
-    if oldText = fixedText then 
+    if updatedText = originalText then 
         ()
     else 
-        do! fs.File.WriteAllTextAsync(newFilePath, fixedText) |> Async.AwaitTask
+        do! fs.File.WriteAllTextAsync(newFilePath, updatedText) |> Async.AwaitTask
 }
