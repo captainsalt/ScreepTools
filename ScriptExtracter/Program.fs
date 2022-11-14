@@ -7,8 +7,7 @@ open System.Diagnostics
 
 [<EntryPoint>]
 let main args = 
-    let watch = Stopwatch()
-    watch.Start()
+
 
     match args with
     | [| sourceDir; targetDir |] ->
@@ -16,14 +15,15 @@ let main args =
             failwithf "Root directory: %s does not exist" sourceDir
 
         printfn "Extracting files..."
+        let watch = Stopwatch()
+        watch.Start()
 
         let fileSystem = FileSystem()
 
-        let deleteMissingFiles = 
-            let jsFiles = getSourceFiles fileSystem sourceDir
-            let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
-            deleteMissing fileSystem  fileRecords targetDir
-        deleteMissingFiles
+        // Delete missing files
+        let jsFiles = getSourceFiles fileSystem sourceDir
+        let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
+        deleteMissing fileSystem  fileRecords targetDir
         
         let jsFiles = getSourceFiles fileSystem sourceDir
         let fileRecords = generateFileRecords fileSystem sourceDir targetDir jsFiles
