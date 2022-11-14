@@ -7,8 +7,6 @@ open System.Diagnostics
 
 [<EntryPoint>]
 let main args = 
-
-
     match args with
     | [| sourceDir; targetDir |] ->
         if Directory.Exists(sourceDir) |> not then
