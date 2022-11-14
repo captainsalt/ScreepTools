@@ -33,4 +33,14 @@ let rec getSourceFiles (fs: IFileSystem) basePath =
 
     getFilesExec [basePath]
 
+let getMatchingFileRecord (fs: IFileSystem) fileRecords filePath nodeImport = 
+    fileRecords 
+    |> Seq.tryFind 
+        (fun fRecord -> 
+            let importFullPath = 
+                let fileDirectory = fs.Path.GetDirectoryName(filePath)
+                let importRelativePath = fs.Path.Combine(fileDirectory, nodeImport + ".js")
+                fs.Path.GetFullPath(importRelativePath)
 
+            fRecord.sourceFullPath = importFullPath
+         )

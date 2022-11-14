@@ -21,7 +21,7 @@ let ``Assert getDotNames correcty names files`` () =
     Assert.Equal("one.two.three", Util.getDotName "one/two/three")
 
 [<Fact>]
-let ``Assert gerateFileRecords generates records with correct information`` () =
+let ``Assert generateFileRecords generates records with correct information`` () =
     let sourcePath = @"C:\js\"
     let targetPath = @"C:\target"
     let mockFs = 

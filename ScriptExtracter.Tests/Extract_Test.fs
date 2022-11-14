@@ -4,7 +4,7 @@ open Xunit
 open System.IO.Abstractions.TestingHelpers
 
 [<Fact>]
-let ``Assert fixImports correctly changes imports`` () =
+let ``Assert replaceImports correctly changes imports`` () =
     let sourcePath = @"C:\js\"
     let targetPath = @"C:\target"
 
@@ -31,7 +31,7 @@ let ``Assert fixImports correctly changes imports`` () =
         <| targetPath 
         <| testFiles
 
-    let (fixedText, _) = Extract.fixImports mockFs fileRecords subFile |> Async.RunSynchronously  
+    let (fixedText, _) = Extract.replaceImports mockFs fileRecords subFile |> Async.RunSynchronously  
     let expectedText = "require(\"sub1.main\")"
     Assert.Equal(expectedText, fixedText)
 
